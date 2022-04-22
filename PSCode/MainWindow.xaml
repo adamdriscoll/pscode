@@ -3,7 +3,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" MinWidth="0" MinHeight="300" Width="950" Title="PSCode" x:Class="PSCode.MainWindow" Background="#1E1E1E">
     <DockPanel>
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="5" Margin="3">
-
+            <Button Name="btnRun">Run</Button>
+            <Button Name="btnSave">Save</Button>
+            <Button Name="btnOpen">Open</Button>
         </StackPanel>
         <StackPanel Name="StatusBar" Background="Purple" Height="25" DockPanel.Dock="Bottom" Orientation="Horizontal">
             <TextBlock Name="StatusText" Text="Ready" Margin="5 0 0 0" VerticalAlignment="Center" FontSize="12"/>

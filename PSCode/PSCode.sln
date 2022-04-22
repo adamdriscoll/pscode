@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32210.238
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSCode", "PSCode.csproj", "{15388191-93CF-41C1-873F-C55C1F1E9103}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15388191-93CF-41C1-873F-C55C1F1E9103}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15388191-93CF-41C1-873F-C55C1F1E9103}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15388191-93CF-41C1-873F-C55C1F1E9103}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15388191-93CF-41C1-873F-C55C1F1E9103}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4AB88533-29F6-41E4-A171-4D036EA28DCC}
+	EndGlobalSection
+EndGlobal

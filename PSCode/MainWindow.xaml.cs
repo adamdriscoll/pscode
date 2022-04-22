@@ -20,6 +20,9 @@ using System.Management.Automation.Runspaces;
 using System.Management.Automation;
 using System.Collections;
 using System.Linq;
+using ICSharpCode.AvalonEdit.AddIn;
+using System.Collections.ObjectModel;
+using System.Management.Automation.Language;
 
 namespace PSCode
 {
@@ -31,11 +34,11 @@ namespace PSCode
         private readonly TextMate.Installation _textMateInstallation;
         private CompletionWindow _completionWindow;
         private OverloadInsightWindow _insightWindow;
-        private TextBlock _statusTextBlock;
         private ElementGenerator _generator = new ElementGenerator();
         private RegistryOptions _registryOptions;
         private int _currentTheme = (int)ThemeName.DarkPlus;
         private Runspace _runspace;
+        private TextMarkerService textMarkerService;
 
         public MainWindow()
         {
@@ -43,6 +46,9 @@ namespace PSCode
 
             _runspace = RunspaceFactory.CreateRunspace();
             _runspace.Open();
+
+            var btnRun = this.FindControl<Button>("btnRun");
+            btnRun.Click += BtnRun_Click;
 
             _textEditor = this.FindControl<TextEditor>("Editor");
             _textEditor.Background = Brushes.Transparent;
@@ -61,7 +67,6 @@ namespace PSCode
             _textEditor.TextArea.TextEntering += textEditor_TextArea_TextEntering;
             _textEditor.Options.ShowBoxForControlCharacters = true;
             _textEditor.TextArea.IndentationStrategy = new AvaloniaEdit.Indentation.CSharp.CSharpIndentationStrategy(_textEditor.Options);
-            _textEditor.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             _textEditor.TextArea.RightClickMovesCaret = true;
 
             _textEditor.TextArea.TextView.ElementGenerators.Add(_generator);
@@ -75,10 +80,13 @@ namespace PSCode
 
             string scopeName = _registryOptions.GetScopeByLanguageId(language.Id);
 
-            _textEditor.Document = new TextDocument("# Welcome to PSCode" + Environment.NewLine);
+            var document = new TextDocument("# Welcome to PSCode" + Environment.NewLine);
+            _textEditor.Document = document;
             _textMateInstallation.SetGrammar(_registryOptions.GetScopeByLanguageId(language.Id));
 
-            _statusTextBlock = this.Find<TextBlock>("StatusText");
+            textMarkerService = new TextMarkerService(document);
+            _textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+            _textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 
             this.AddHandler(PointerWheelChangedEvent, (o, i) =>
             {
@@ -88,11 +96,33 @@ namespace PSCode
             }, RoutingStrategies.Bubble, true);
         }
 
-        private void Caret_PositionChanged(object sender, EventArgs e)
+        private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
-            _statusTextBlock.Text = string.Format("Line {0} Column {1}",
-                _textEditor.TextArea.Caret.Line,
-                _textEditor.TextArea.Caret.Column);
+            using (var ps = PowerShell.Create())
+            {
+                ps.Runspace = _runspace;
+                ps.AddScript(_textEditor.Text);
+
+                try
+                {
+                    ps.Invoke();
+
+                    if (ps.HadErrors)
+                    {
+                        foreach(var error in ps.Streams.Error)
+                        {
+                            var messageBoxStandardWindow = MessageBox.Avalonia.MessageBoxManager.GetMessageBoxStandardWindow("Error", error.ToString());
+                            messageBoxStandardWindow.Show();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var messageBoxStandardWindow = MessageBox.Avalonia.MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message);
+                    messageBoxStandardWindow.Show();
+                }
+                
+            }
         }
 
         protected override void OnClosed(EventArgs e)
@@ -127,6 +157,19 @@ namespace PSCode
 
         private void textEditor_TextArea_TextEntered(object sender, TextInputEventArgs e)
         {
+            Parser.ParseInput(_textEditor.Text, out Token[] tokens, out ParseError[] errors);
+
+            textMarkerService.RemoveAll(x => true);
+
+            foreach(var error in errors)
+            {
+                var marker = textMarkerService.Create(error.Extent.StartOffset - 1, error.Extent.EndOffset - error.Extent.StartOffset);
+                marker.ToolTip = error.Message;
+                marker.Tag = error.Message;
+                marker.MarkerTypes = TextMarkerTypes.NormalUnderline;
+                marker.MarkerColor = Color.FromRgb(255, 0, 0);
+            }
+
             if (e.Text == "-" || e.Text == "$" || e.Text == "." || e.Text == ":")
             {
                 _completionWindow = new CompletionWindow(_textEditor.TextArea);

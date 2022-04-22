@@ -1,16 +1,11 @@
 ﻿using Microsoft.VisualStudio.LanguageServer.Client;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.Utilities;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +15,7 @@ namespace PSCode.VS
     [Export(typeof(ILanguageClient))]
     internal class PowerShellLanguageClient : ILanguageClient
     {
-        public string Name => "PowerShell Language Extension";
+        public string Name => "powershell";
 
         public IEnumerable<string> ConfigurationSections => null;
 
@@ -35,6 +30,8 @@ namespace PSCode.VS
 
         public async Task<Connection> ActivateAsync(CancellationToken token)
         {
+            await Task.CompletedTask;
+
             var directory = Path.GetDirectoryName(GetType().Assembly.Location);
             var bundledModules = Path.Combine(directory, "PowerShellEditorServices");
             var sessionTempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -44,16 +41,17 @@ namespace PSCode.VS
 
             var startInfo = new ProcessStartInfo();
             startInfo.FileName = "pwsh";
-            startInfo.CreateNoWindow = false;
-            startInfo.WindowStyle = ProcessWindowStyle.Normal;
-            startInfo.UseShellExecute = true;
-            startInfo.Arguments = $"-NoExit -NoLogo -NoProfile -Command \"& '{bundledModules}/PowerShellEditorServices/Start-EditorServices.ps1' -BundledModulesPath '{bundledModules}' -LogPath '{sessionTempPath}/logs.log' -SessionDetailsPath '{sessionDetails}' -FeatureFlags @() -AdditionalModules @() -HostName 'PSCode' -HostProfileId 'myclient' -HostVersion 1.0.0 -LogLevel Diagnostic\"";
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardInput = true;
+            startInfo.Arguments = $"-NoExit -NoLogo -NoProfile -Command \"& '{bundledModules}/PowerShellEditorServices/Start-EditorServices.ps1' -Stdio -BundledModulesPath '{bundledModules}' -LogPath '{sessionTempPath}/logs.log' -SessionDetailsPath '{sessionDetails}' -FeatureFlags @() -AdditionalModules @() -HostName 'PSCode' -HostProfileId 'myclient' -HostVersion 1.0.0\"";
 
             var _pwsh = new Process();
             _pwsh.Exited += (s, e) =>
             {
                 Environment.Exit(0);
             };
+
             _pwsh.StartInfo = startInfo;
             _pwsh.Start();
 
@@ -62,16 +60,7 @@ namespace PSCode.VS
                 Thread.Sleep(100);
             }
 
-            var sessionInfoContents = File.ReadAllText(sessionDetails);
-            var sessionInfo = JsonConvert.DeserializeObject<JObject>(sessionInfoContents);
-
-            var namedPipeName = sessionInfo["languageServicePipeName"].Value<string>();
-            var name = namedPipeName.Split('\\').Last();
-
-            var _stream = new NamedPipeClientStream(".", name, PipeDirection.InOut);
-            await _stream.ConnectAsync();
-
-            return new Connection(_stream, _stream);
+            return new Connection(_pwsh.StandardOutput.BaseStream, _pwsh.StandardInput.BaseStream);
         }
 
         public async Task OnLoadedAsync()
