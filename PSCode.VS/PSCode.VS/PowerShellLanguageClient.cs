@@ -1,11 +1,15 @@
 ﻿using Microsoft.VisualStudio.LanguageServer.Client;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.Utilities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipes;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,16 +45,11 @@ namespace PSCode.VS
 
             var startInfo = new ProcessStartInfo();
             startInfo.FileName = "pwsh";
-            startInfo.UseShellExecute = false;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardInput = true;
-            startInfo.Arguments = $"-NoExit -NoLogo -NoProfile -Command \"& '{bundledModules}/PowerShellEditorServices/Start-EditorServices.ps1' -Stdio -BundledModulesPath '{bundledModules}' -LogPath '{sessionTempPath}/logs.log' -SessionDetailsPath '{sessionDetails}' -FeatureFlags @() -AdditionalModules @() -HostName 'PSCode' -HostProfileId 'myclient' -HostVersion 1.0.0\"";
+            startInfo.UseShellExecute = true;
+            startInfo.CreateNoWindow = false;
+            startInfo.Arguments = $"-NoProfile -Command \"& Import-Module '{bundledModules}/PowerShellEditorServices/PowerShellEditorServices.psd1'; Start-EditorServices -BundledModulesPath '{bundledModules}' -LogPath '{sessionTempPath}/logs.log' -SessionDetailsPath '{sessionDetails}' -AdditionalModules @() -FeatureFlags @() -HostName 'PSCode' -HostProfileId 'myclient' -HostVersion 1.0.0 -LogLevel Diagnostic\"";
 
             var _pwsh = new Process();
-            _pwsh.Exited += (s, e) =>
-            {
-                Environment.Exit(0);
-            };
 
             _pwsh.StartInfo = startInfo;
             _pwsh.Start();
@@ -60,7 +59,15 @@ namespace PSCode.VS
                 Thread.Sleep(100);
             }
 
-            return new Connection(_pwsh.StandardOutput.BaseStream, _pwsh.StandardInput.BaseStream);
+            var sessionDetailsText = File.ReadAllText(sessionDetails);
+            var json = JsonConvert.DeserializeObject<JObject>(sessionDetailsText);
+            var pipeName = json["languageServicePipeName"].Value<string>();
+            pipeName = pipeName.Split('\\').Last();
+            var namedPipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.WriteThrough);
+            await namedPipe.ConnectAsync(); 
+
+            return new Connection(namedPipe, namedPipe);
+            //return new Connection(_pwsh.StandardOutput.BaseStream, _pwsh.StandardInput.BaseStream);
         }
 
         public async Task OnLoadedAsync()

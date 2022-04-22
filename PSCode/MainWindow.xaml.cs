@@ -37,6 +37,7 @@ namespace PSCode
         private ElementGenerator _generator = new ElementGenerator();
         private RegistryOptions _registryOptions;
         private int _currentTheme = (int)ThemeName.DarkPlus;
+        // RUNSPACE
         private Runspace _runspace;
         private TextMarkerService textMarkerService;
 
@@ -44,6 +45,7 @@ namespace PSCode
         {
             InitializeComponent();
 
+            // RUNSPACE
             _runspace = RunspaceFactory.CreateRunspace();
             _runspace.Open();
 
@@ -76,11 +78,11 @@ namespace PSCode
 
             _textMateInstallation = _textEditor.InstallTextMate(_registryOptions);
 
-            Language language = _registryOptions.GetLanguageByExtension(".ps1");
+            Language language = _registryOptions.GetLanguageByExtension(".ps1"); // LANGUAGE
 
             string scopeName = _registryOptions.GetScopeByLanguageId(language.Id);
 
-            var document = new TextDocument("# Welcome to PSCode" + Environment.NewLine);
+            var document = new TextDocument("# Welcome to PSCode" + Environment.NewLine); // DOCUMENT
             _textEditor.Document = document;
             _textMateInstallation.SetGrammar(_registryOptions.GetScopeByLanguageId(language.Id));
 
@@ -98,6 +100,7 @@ namespace PSCode
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
         {
+            // RUN
             using (var ps = PowerShell.Create())
             {
                 ps.Runspace = _runspace;
@@ -109,7 +112,7 @@ namespace PSCode
 
                     if (ps.HadErrors)
                     {
-                        foreach(var error in ps.Streams.Error)
+                        foreach (var error in ps.Streams.Error)
                         {
                             var messageBoxStandardWindow = MessageBox.Avalonia.MessageBoxManager.GetMessageBoxStandardWindow("Error", error.ToString());
                             messageBoxStandardWindow.Show();
@@ -121,7 +124,7 @@ namespace PSCode
                     var messageBoxStandardWindow = MessageBox.Avalonia.MessageBoxManager.GetMessageBoxStandardWindow("Error", ex.Message);
                     messageBoxStandardWindow.Show();
                 }
-                
+
             }
         }
 
@@ -157,13 +160,15 @@ namespace PSCode
 
         private void textEditor_TextArea_TextEntered(object sender, TextInputEventArgs e)
         {
+            // ENTERED
+
             Parser.ParseInput(_textEditor.Text, out Token[] tokens, out ParseError[] errors);
 
             textMarkerService.RemoveAll(x => true);
 
-            foreach(var error in errors)
+            foreach (var error in errors)
             {
-                var marker = textMarkerService.Create(error.Extent.StartOffset - 1, error.Extent.EndOffset - error.Extent.StartOffset);
+                var marker = textMarkerService.Create(error.Extent.StartOffset, error.Extent.EndOffset - error.Extent.StartOffset);
                 marker.ToolTip = error.Message;
                 marker.Tag = error.Message;
                 marker.MarkerTypes = TextMarkerTypes.NormalUnderline;
@@ -181,7 +186,12 @@ namespace PSCode
                 var data = _completionWindow.CompletionList.CompletionData;
                 foreach (var item in completion.CompletionMatches)
                 {
-                    data.Add(new CompletionData(item.CompletionText, item.ListItemText));
+                    var insertText = item.CompletionText;
+                    if (e.Text == "-")
+                    {
+                        insertText = insertText.Split('-').Last();
+                    }
+                    data.Add(new CompletionData(item.ListItemText, insertText));
                 }
 
                 _completionWindow.Show();
