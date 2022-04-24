@@ -33,7 +33,7 @@ namespace PSCode
         private readonly TextEditor _textEditor;
         private readonly TextMate.Installation _textMateInstallation;
         private CompletionWindow _completionWindow;
-        private OverloadInsightWindow _insightWindow;
+        private TextBlock _statusText;
         private ElementGenerator _generator = new ElementGenerator();
         private RegistryOptions _registryOptions;
         private int _currentTheme = (int)ThemeName.DarkPlus;
@@ -52,6 +52,8 @@ namespace PSCode
             var btnRun = this.FindControl<Button>("btnRun");
             btnRun.Click += BtnRun_Click;
 
+            _statusText = this.FindControl<TextBlock>("StatusText");
+
             _textEditor = this.FindControl<TextEditor>("Editor");
             _textEditor.Background = Brushes.Transparent;
             _textEditor.ShowLineNumbers = true;
@@ -61,15 +63,18 @@ namespace PSCode
                 {
                     new MenuItem { Header = "Copy", InputGesture = new KeyGesture(Key.C, KeyModifiers.Control) },
                     new MenuItem { Header = "Paste", InputGesture = new KeyGesture(Key.V, KeyModifiers.Control) },
-                    new MenuItem { Header = "Cut", InputGesture = new KeyGesture(Key.X, KeyModifiers.Control) }
+                    new MenuItem { Header = "Cut", InputGesture = new KeyGesture(Key.X, KeyModifiers.Control) },
+                    new MenuItem { Header = "Format", InputGesture = new KeyGesture(Key.F8)  },
                 }
             };
+
             _textEditor.TextArea.Background = this.Background;
             _textEditor.TextArea.TextEntered += textEditor_TextArea_TextEntered;
             _textEditor.TextArea.TextEntering += textEditor_TextArea_TextEntering;
             _textEditor.Options.ShowBoxForControlCharacters = true;
             _textEditor.TextArea.IndentationStrategy = new AvaloniaEdit.Indentation.CSharp.CSharpIndentationStrategy(_textEditor.Options);
             _textEditor.TextArea.RightClickMovesCaret = true;
+
 
             _textEditor.TextArea.TextView.ElementGenerators.Add(_generator);
 
@@ -96,6 +101,20 @@ namespace PSCode
                 if (i.Delta.Y > 0) _textEditor.FontSize++;
                 else _textEditor.FontSize = _textEditor.FontSize > 1 ? _textEditor.FontSize - 1 : 1;
             }, RoutingStrategies.Bubble, true);
+
+            _textEditor.TextArea.Caret.PositionChanged += (s, e) =>
+            {
+                var line = _textEditor.TextArea.Caret.Line;
+                var column = _textEditor.TextArea.Caret.Column;
+                var message = string.Empty;
+                var marker = textMarkerService.GetMarkersAtOffset(_textEditor.TextArea.Caret.Offset).FirstOrDefault();
+                if (marker != null)
+                {
+                    message = marker.ToolTip.ToString();
+                }
+
+                _statusText.Text = $"Line: {line}, Column: {column} {message}";
+            };
         }
 
         private void BtnRun_Click(object sender, RoutedEventArgs e)
@@ -152,8 +171,6 @@ namespace PSCode
                 }
             }
 
-            _insightWindow?.Hide();
-
             // Do not set e.Handled=true.
             // We still want to insert the character that was typed.
         }
@@ -161,20 +178,33 @@ namespace PSCode
         private void textEditor_TextArea_TextEntered(object sender, TextInputEventArgs e)
         {
             // ENTERED
+            if (Parse())
+            {
+                Analyze();
+            }
+            Complete(e);
+        }
 
+        private bool Parse()
+        {
             Parser.ParseInput(_textEditor.Text, out Token[] tokens, out ParseError[] errors);
 
-            textMarkerService.RemoveAll(x => true);
+            textMarkerService.RemoveAll(x => (string)x.Tag == "Error");
 
             foreach (var error in errors)
             {
                 var marker = textMarkerService.Create(error.Extent.StartOffset, error.Extent.EndOffset - error.Extent.StartOffset);
                 marker.ToolTip = error.Message;
-                marker.Tag = error.Message;
+                marker.Tag = "Error";
                 marker.MarkerTypes = TextMarkerTypes.NormalUnderline;
                 marker.MarkerColor = Color.FromRgb(255, 0, 0);
             }
 
+            return !errors.Any();
+        }
+
+        private void Complete(TextInputEventArgs e)
+        {
             if (e.Text == "-" || e.Text == "$" || e.Text == "." || e.Text == ":")
             {
                 _completionWindow = new CompletionWindow(_textEditor.TextArea);
@@ -196,19 +226,25 @@ namespace PSCode
 
                 _completionWindow.Show();
             }
-            else if (e.Text == "(")
+        }
+
+        private void Analyze()
+        {
+            // ANALYZE
+            textMarkerService.RemoveAll(x => (string)x.Tag == "Analyzer");
+
+            using var ps = PowerShell.Create();
+            ps.AddCommand("Invoke-ScriptAnalyzer").AddParameter("ScriptDefinition", _textEditor.Text);
+            var suggestions = ps.Invoke();
+
+            foreach (dynamic suggestion in suggestions)
             {
-                _insightWindow = new OverloadInsightWindow(_textEditor.TextArea);
-                _insightWindow.Closed += (o, args) => _insightWindow = null;
-
-                _insightWindow.Provider = new MyOverloadProvider(new[]
-                {
-                    ("Method1(int, string)", "Method1 description"),
-                    ("Method2(int)", "Method2 description"),
-                    ("Method3(string)", "Method3 description"),
-                });
-
-                _insightWindow.Show();
+                var extent = (IScriptExtent)suggestion.Extent;
+                var marker = textMarkerService.Create(extent.StartOffset, extent.EndOffset - extent.StartOffset);
+                marker.ToolTip = suggestion.Message;
+                marker.Tag = "Analyzer";
+                marker.MarkerTypes = TextMarkerTypes.NormalUnderline;
+                marker.MarkerColor = Color.FromRgb(0, 255, 0);
             }
         }
 
