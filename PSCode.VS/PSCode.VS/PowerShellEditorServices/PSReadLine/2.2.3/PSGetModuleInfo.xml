@@ -7,7 +7,7 @@
     </TN>
     <MS>
       <S N="Name">PSReadLine</S>
-      <S N="Version">2.2.2</S>
+      <S N="Version">2.2.3</S>
       <S N="Type">Module</S>
       <S N="Description">Great command line editing in the PowerShell console host</S>
       <S N="Author">Microsoft Corporation</S>
@@ -24,7 +24,7 @@
         </LST>
       </Obj>
       <S N="Copyright">(c) Microsoft Corporation. All rights reserved.</S>
-      <DT N="PublishedDate">2022-02-22T19:07:04+00:00</DT>
+      <DT N="PublishedDate">2022-04-20T21:36:22+00:00</DT>
       <Nil N="InstalledDate" />
       <Nil N="UpdatedDate" />
       <Nil N="LicenseUri" />
@@ -57,11 +57,19 @@
             </Obj>
           </En>
           <En>
-            <S N="Key">Workflow</S>
+            <S N="Key">DscResource</S>
             <Obj N="Value" RefId="5">
               <TNRef RefId="1" />
               <LST />
             </Obj>
+          </En>
+          <En>
+            <S N="Key">Workflow</S>
+            <Ref N="Value" RefId="5" />
+          </En>
+          <En>
+            <S N="Key">RoleCapability</S>
+            <Ref N="Value" RefId="5" />
           </En>
           <En>
             <S N="Key">Function</S>
@@ -71,14 +79,6 @@
                 <S>PSConsoleHostReadLine</S>
               </LST>
             </Obj>
-          </En>
-          <En>
-            <S N="Key">DscResource</S>
-            <Ref N="Value" RefId="5" />
-          </En>
-          <En>
-            <S N="Key">RoleCapability</S>
-            <Ref N="Value" RefId="5" />
           </En>
           <En>
             <S N="Key">Cmdlet</S>
@@ -115,16 +115,16 @@
           <S N="requireLicenseAcceptance">False</S>
           <S N="isLatestVersion">True</S>
           <S N="isAbsoluteLatestVersion">True</S>
-          <S N="versionDownloadCount">70472</S>
-          <S N="downloadCount">935044</S>
-          <S N="packageSize">231421</S>
-          <S N="published">2/22/2022 7:07:04 PM +00:00</S>
-          <S N="created">2/22/2022 7:07:04 PM +00:00</S>
-          <S N="lastUpdated">4/18/2022 10:06:20 PM +00:00</S>
+          <S N="versionDownloadCount">221</S>
+          <S N="downloadCount">938171</S>
+          <S N="packageSize">237457</S>
+          <S N="published">4/20/2022 9:36:22 PM +00:00</S>
+          <S N="created">4/20/2022 9:36:22 PM +00:00</S>
+          <S N="lastUpdated">4/20/2022 10:56:28 PM +00:00</S>
           <S N="tags">PSModule PSCmdlet_Get-PSReadLineKeyHandler PSCommand_Get-PSReadLineKeyHandler PSCmdlet_Set-PSReadLineKeyHandler PSCommand_Set-PSReadLineKeyHandler PSCmdlet_Remove-PSReadLineKeyHandler PSCommand_Remove-PSReadLineKeyHandler PSCmdlet_Get-PSReadLineOption PSCommand_Get-PSReadLineOption PSCmdlet_Set-PSReadLineOption PSCommand_Set-PSReadLineOption PSIncludes_Cmdlet PSFunction_PSConsoleHostReadLine PSCommand_PSConsoleHostReadLine PSIncludes_Function</S>
           <S N="developmentDependency">False</S>
-          <S N="updated">2022-04-18T22:06:20Z</S>
-          <S N="NormalizedVersion">2.2.2</S>
+          <S N="updated">2022-04-20T22:56:28Z</S>
+          <S N="NormalizedVersion">2.2.3</S>
           <S N="Authors">Microsoft Corporation</S>
           <S N="IsPrerelease">false</S>
           <S N="ItemType">Module</S>
@@ -136,7 +136,7 @@
           <S N="CompanyName">Microsoft Corporation</S>
         </MS>
       </Obj>
-      <S N="InstalledLocation">D:\a\_work\1\s\module\PSReadLine\2.2.2</S>
+      <S N="InstalledLocation">D:\a\_work\1\s\module\PSReadLine\2.2.3</S>
     </MS>
   </Obj>
 </Objs>

@@ -56,22 +56,22 @@
             </Obj>
           </En>
           <En>
-            <S N="Key">Workflow</S>
+            <S N="Key">DscResource</S>
             <Obj N="Value" RefId="5">
               <TNRef RefId="1" />
               <LST />
             </Obj>
           </En>
           <En>
-            <S N="Key">Function</S>
-            <Ref N="Value" RefId="5" />
-          </En>
-          <En>
-            <S N="Key">DscResource</S>
+            <S N="Key">Workflow</S>
             <Ref N="Value" RefId="5" />
           </En>
           <En>
             <S N="Key">RoleCapability</S>
+            <Ref N="Value" RefId="5" />
+          </En>
+          <En>
+            <S N="Key">Function</S>
             <Ref N="Value" RefId="5" />
           </En>
           <En>
@@ -107,15 +107,15 @@
           <S N="requireLicenseAcceptance">False</S>
           <S N="isLatestVersion">True</S>
           <S N="isAbsoluteLatestVersion">True</S>
-          <S N="versionDownloadCount">426760</S>
-          <S N="downloadCount">2378088</S>
+          <S N="versionDownloadCount">431422</S>
+          <S N="downloadCount">2383382</S>
           <S N="packageSize">17309865</S>
           <S N="published">8/24/2021 7:43:49 PM +00:00</S>
           <S N="created">8/24/2021 7:43:49 PM +00:00</S>
-          <S N="lastUpdated">4/18/2022 10:06:20 PM +00:00</S>
+          <S N="lastUpdated">4/20/2022 10:56:28 PM +00:00</S>
           <S N="tags">lint bestpractice PSModule PSCmdlet_Get-ScriptAnalyzerRule PSCommand_Get-ScriptAnalyzerRule PSCmdlet_Invoke-ScriptAnalyzer PSCommand_Invoke-ScriptAnalyzer PSCmdlet_Invoke-Formatter PSCommand_Invoke-Formatter PSIncludes_Cmdlet</S>
           <S N="developmentDependency">False</S>
-          <S N="updated">2022-04-18T22:06:20Z</S>
+          <S N="updated">2022-04-20T22:56:28Z</S>
           <S N="NormalizedVersion">1.20.0</S>
           <S N="Authors">Microsoft Corporation</S>
           <S N="IsPrerelease">false</S>
